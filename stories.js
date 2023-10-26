@@ -1,9 +1,7 @@
 "use strict";
 
-// This is the global list of the stories, an instance of StoryList
 let storyList;
 
-/** Get and show stories when site first loads. */
 
 async function getAndShowStoriesOnStart() {
   storyList = await StoryList.getStories();
@@ -12,14 +10,8 @@ async function getAndShowStoriesOnStart() {
   putStoriesOnPage();
 }
 
-/**
- * A render method to render HTML for an individual Story instance
- * - story: an instance of Story
- *
- * Returns the markup for the story.
- */
 
-function generateStoryMarkup(story) {
+function generateStoryMarkup(story, showDeleteBtn = false) {
   // console.debug("generateStoryMarkup", story);
 
   const hostName = story.getHostName();
@@ -47,6 +39,7 @@ function getDeleteBtnHTML() {
           </span>`;
 }
 
+
 function getStarHTML(story, user) {
   const isFavorite = user.isFavorite(story);
   const starType = isFavorite ? "fas" : "far";
@@ -55,14 +48,12 @@ function getStarHTML(story, user) {
           </span>`;
 }
 
-/** Gets list of stories from server, generates their HTML, and puts on page. */
 
 function putStoriesOnPage() {
   console.debug("putStoriesOnPage");
 
   $allStoriesList.empty();
 
-  // loop through all of our stories and generate HTML for them
   for (let story of storyList.stories) {
     const $story = generateStoryMarkup(story);
     $allStoriesList.append($story);
@@ -84,6 +75,8 @@ async function deleteStory(evt) {
 
 $ownStories.on('click', ".trash-can", deleteStory);
 
+/** New story submission */
+
 async function submitNewStory(evt) {
   console.debug('submitNewStory');
   evt.preventDefault();
@@ -92,7 +85,7 @@ async function submitNewStory(evt) {
   const url = $("#create-url").val();
   const author = $("#create-autor").val();
   const username = currentUser.username;
-  const storyData = {tite, url, author, username};
+  const storyData = {title, url, author, username};
 
   const story = await storyList.addStory(currentUser, storyData);
   
@@ -100,10 +93,12 @@ async function submitNewStory(evt) {
   $allStoriesList.prepend($story);
 
   $submitForm.slideUp("slow");
-  $submitForm.trigget("reset");
+  $submitForm.trigger("reset");
 }
 
 $submitForm.on("submit", submitNewStory);
+
+/** List of users stories */
 
 function putUserStoriesOnPage() {
   console.debug("putUserStoriesOnPage");
@@ -121,6 +116,8 @@ function putUserStoriesOnPage() {
   $ownStories.show();  
 }
 
+/** Puts favorites on page */
+
 function putFavoritesListOnPage() {
   console.debug("putFavoritesListOnPage");
 
@@ -137,6 +134,8 @@ function putFavoritesListOnPage() {
   $favoritedStories.show();
 }
 
+/**Handle the favorite story toggle on/off */
+
 async function toggleStoryFavorite(evt) {
   console.debug("toggleStoryFavorite");
 
@@ -146,7 +145,10 @@ async function toggleStoryFavorite(evt) {
   const story = storyList.stories.find(s => s.story === storyId);
 
   if($tgt.hasClass("fas")) {
-    await currentUser.removeFavorites(story);
+    await currentUser.removeFavorite(story);
+    $tgt.closest("i").toggleClass("fas far");
+  } else {
+    await currentUser.addFavorite(story);
     $tgt.closest("i").toggleClass("fas far");
   }
 }
